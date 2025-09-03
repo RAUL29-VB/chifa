@@ -1,19 +1,24 @@
-import { databases, DATABASE_ID, SETTINGS_COLLECTION_ID, ID } from './appwrite';
+import { supabaseService } from './supabaseService';
 
 export interface Settings {
   id?: string;
-  cashInitialAmount: number;
+  cash_initial_amount: number;
+  restaurant_name?: string;
+  restaurant_address?: string;
+  restaurant_phone?: string;
 }
 
 class SettingsService {
   async getSettings(): Promise<Settings | null> {
     try {
-      const response = await databases.listDocuments(DATABASE_ID, SETTINGS_COLLECTION_ID);
-      if (response.documents.length > 0) {
-        const doc = response.documents[0];
+      const settings = await supabaseService.getSettings();
+      if (settings) {
         return {
-          id: doc.$id,
-          cashInitialAmount: doc.cashInitialAmount
+          id: settings.id,
+          cash_initial_amount: settings.cash_initial_amount,
+          restaurant_name: settings.restaurant_name,
+          restaurant_address: settings.restaurant_address,
+          restaurant_phone: settings.restaurant_phone
         };
       }
       return null;
@@ -25,20 +30,26 @@ class SettingsService {
 
   async updateCashInitialAmount(amount: number): Promise<boolean> {
     try {
-      const settings = await this.getSettings();
-      
-      if (settings?.id) {
-        await databases.updateDocument(DATABASE_ID, SETTINGS_COLLECTION_ID, settings.id, {
-          cashInitialAmount: amount
-        });
-      } else {
-        await databases.createDocument(DATABASE_ID, SETTINGS_COLLECTION_ID, ID.unique(), {
-          cashInitialAmount: amount
-        });
-      }
+      await supabaseService.updateSettings({
+        cash_initial_amount: amount
+      });
       return true;
     } catch (error) {
       console.error('Error actualizando configuración:', error);
+      return false;
+    }
+  }
+
+  async updateRestaurantInfo(info: {
+    restaurant_name?: string;
+    restaurant_address?: string;
+    restaurant_phone?: string;
+  }): Promise<boolean> {
+    try {
+      await supabaseService.updateSettings(info);
+      return true;
+    } catch (error) {
+      console.error('Error actualizando información del restaurante:', error);
       return false;
     }
   }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { usePos } from '../../context/PosContext';
-import { menuService } from '../../services/menuService';
+import { supabaseService } from '../../services/supabaseService';
 
 
 import { 
@@ -26,13 +26,17 @@ function MenuManagement() {
     const loadData = async () => {
       try {
         const [items, categories] = await Promise.all([
-          menuService.getMenuItems(),
-          menuService.getCategories()
+          supabaseService.getMenuItems(),
+          supabaseService.getCategories()
         ]);
         
         
         // Reemplazar todos los datos de una vez
-        dispatch({ type: 'SET_MENU_DATA', items, categories });
+        dispatch({ 
+          type: 'SET_MENU_DATA', 
+          items: items.map(item => ({ $id: item.id, ...item })), 
+          categories: categories.map(cat => ({ name: cat.name }))
+        });
         
         // Establecer la primera categoría como default
         if (categories.length > 0) {
@@ -68,21 +72,21 @@ function MenuManagement() {
     
     try {
       if (editingItem) {
-        const updatedItem = await menuService.updateMenuItem(editingItem, {
+        const updatedItem = await supabaseService.updateMenuItem(editingItem, {
           ...newItem,
           available: true
         });
         dispatch({ 
           type: 'UPDATE_MENU_ITEM', 
-          item: { id: updatedItem.$id!, ...updatedItem }
+          item: { id: updatedItem.id!, ...updatedItem }
         });
         setEditingItem(null);
       } else {
-        const item = await menuService.createMenuItem({
+        const item = await supabaseService.createMenuItem({
           ...newItem,
           available: true
         });
-        dispatch({ type: 'ADD_MENU_ITEM', item: { id: item.$id!, ...item } });
+        dispatch({ type: 'ADD_MENU_ITEM', item: { id: item.id!, ...item } });
       }
       
       setNewItem({
@@ -105,7 +109,7 @@ function MenuManagement() {
     if (!newCategory || state.categories.includes(newCategory)) return;
     
     try {
-      await menuService.createCategory({ name: newCategory });
+      await supabaseService.createCategory({ name: newCategory });
       dispatch({ type: 'ADD_CATEGORY', category: newCategory });
       setNewCategory('');
       setShowNewCategoryForm(false);
@@ -310,7 +314,7 @@ function MenuManagement() {
                       <button
                         onClick={async () => {
                           try {
-                            await menuService.updateMenuItem(item.id, { available: !item.available });
+                            await supabaseService.updateMenuItem(item.id, { available: !item.available });
                             dispatch({ type: 'TOGGLE_ITEM_AVAILABILITY', itemId: item.id });
                           } catch (error) {
                             console.error('Error updating availability:', error);
@@ -348,7 +352,7 @@ function MenuManagement() {
                       <button 
                         onClick={async () => {
                           try {
-                            await menuService.deleteMenuItem(item.id);
+                            await supabaseService.deleteMenuItem(item.id);
                             dispatch({ type: 'DELETE_MENU_ITEM', itemId: item.id });
                           } catch (error) {
                             console.error('Error deleting item:', error);

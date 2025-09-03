@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { menuService } from '../services/menuService';
+import { supabaseService } from '../services/supabaseService';
 
 export interface User {
   id: string;
@@ -29,18 +29,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Primero intentar con usuarios de Appwrite
-      const users = await menuService.getUsers();
+      // Intentar con usuarios de Supabase
+      const users = await supabaseService.getUsers();
       const foundUser = users.find(u => u.email === email && u.password === password);
       
       if (foundUser) {
         // Obtener empleado para determinar el rol
-        const employees = await menuService.getEmployees();
-        const employee = employees.find(emp => emp.$id === foundUser.employeeId);
+        const employees = await supabaseService.getEmployees();
+        const employee = employees.find(emp => emp.id === foundUser.employee_id);
         const role = employee?.position?.toLowerCase() as 'admin' | 'cajero' | 'mozo' | 'cocina' || 'cajero';
         
         setUser({
-          id: foundUser.$id!,
+          id: foundUser.id!,
           name: foundUser.name,
           email: foundUser.email,
           role: role === 'administrador' ? 'admin' : role
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return true;
       }
       
-      // Si no se encuentra en Appwrite, usar usuarios demo
+      // Si no se encuentra en Supabase, usar usuarios demo
       const demoUser = demoUsers.find(u => u.email === email && u.password === password);
       if (demoUser) {
         const { password: _, ...userWithoutPassword } = demoUser;

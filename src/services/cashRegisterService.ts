@@ -1,26 +1,26 @@
-import { databases, DATABASE_ID, CASH_REGISTER_COLLECTION_ID, ID } from './appwrite';
+import { supabaseService } from './supabaseService';
 
 export interface CashRegister {
   id?: string;
-  isOpen: boolean;
-  initialAmount: number;
-  currentAmount: number;
-  totalSales: number;
-  openedAt: string;
-  closedAt?: string;
-  openedBy: string;
+  is_open: boolean;
+  initial_amount: number;
+  current_amount: number;
+  total_sales: number;
+  opened_at: string;
+  closed_at?: string;
+  opened_by: string;
 }
 
 class CashRegisterService {
   async openCashRegister(initialAmount: number, openedBy: string): Promise<boolean> {
     try {
-      await databases.createDocument(DATABASE_ID, CASH_REGISTER_COLLECTION_ID, ID.unique(), {
-        isOpen: true,
-        initialAmount: initialAmount,
-        currentAmount: initialAmount,
-        totalSales: 0,
-        openedAt: new Date().toISOString(),
-        openedBy: openedBy
+      await supabaseService.createCashRegister({
+        is_open: true,
+        initial_amount: initialAmount,
+        current_amount: initialAmount,
+        total_sales: 0,
+        opened_at: new Date().toISOString(),
+        opened_by: openedBy
       });
       return true;
     } catch (error) {
@@ -31,9 +31,9 @@ class CashRegisterService {
 
   async closeCashRegister(cashRegisterId: string): Promise<boolean> {
     try {
-      await databases.updateDocument(DATABASE_ID, CASH_REGISTER_COLLECTION_ID, cashRegisterId, {
-        isOpen: false,
-        closedAt: new Date().toISOString()
+      await supabaseService.updateCashRegister(cashRegisterId, {
+        is_open: false,
+        closed_at: new Date().toISOString()
       });
       return true;
     } catch (error) {
@@ -46,9 +46,9 @@ class CashRegisterService {
     try {
       const cashRegister = await this.getCurrentCashRegister();
       if (cashRegister && cashRegister.id) {
-        await databases.updateDocument(DATABASE_ID, CASH_REGISTER_COLLECTION_ID, cashRegister.id, {
-          currentAmount: cashRegister.currentAmount + saleAmount,
-          totalSales: cashRegister.totalSales + saleAmount
+        await supabaseService.updateCashRegister(cashRegister.id, {
+          current_amount: cashRegister.current_amount + saleAmount,
+          total_sales: cashRegister.total_sales + saleAmount
         });
         return true;
       }
@@ -65,23 +65,19 @@ class CashRegisterService {
 
   async getCurrentCashRegister(): Promise<CashRegister | null> {
     try {
-      const response = await databases.listDocuments(DATABASE_ID, CASH_REGISTER_COLLECTION_ID);
+      const cashRegister = await supabaseService.getCashRegister();
       
-      if (response.documents.length > 0) {
-        // Buscar la caja más reciente sin closedAt
-        const openCash = response.documents.find(doc => doc.isOpen === true);
-        if (openCash) {
-          return {
-            id: openCash.$id,
-            isOpen: openCash.isOpen,
-            initialAmount: openCash.initialAmount,
-            currentAmount: openCash.currentAmount,
-            totalSales: openCash.totalSales || 0,
-            openedAt: openCash.openedAt,
-            closedAt: openCash.closedAt,
-            openedBy: openCash.openedBy
-          };
-        }
+      if (cashRegister && cashRegister.is_open) {
+        return {
+          id: cashRegister.id,
+          is_open: cashRegister.is_open,
+          initial_amount: cashRegister.initial_amount,
+          current_amount: cashRegister.current_amount,
+          total_sales: cashRegister.total_sales || 0,
+          opened_at: cashRegister.opened_at,
+          closed_at: cashRegister.closed_at,
+          opened_by: cashRegister.opened_by
+        };
       }
       return null;
     } catch (error) {

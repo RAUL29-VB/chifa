@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { menuService } from '../../services/menuService';
+import { supabaseService } from '../../services/supabaseService';
 import { DollarSign, Calendar, Users, X, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 
@@ -33,12 +33,12 @@ function PayrollManagement() {
     const loadData = async () => {
       try {
         const [employeesData, attendanceData] = await Promise.all([
-          menuService.getEmployees(),
-          menuService.getAttendance()
+          supabaseService.getEmployees(),
+          supabaseService.getAttendance()
         ]);
         
-        setEmployees(employeesData.map(emp => ({ id: emp.$id!, ...emp })));
-        setAttendance(attendanceData.map(att => ({ id: att.$id!, ...att })));
+        setEmployees(employeesData.map(emp => ({ id: emp.id!, ...emp })));
+        setAttendance(attendanceData.map(att => ({ id: att.id!, ...att })));
       } catch (error) {
         console.error('Error loading data:', error);
       }

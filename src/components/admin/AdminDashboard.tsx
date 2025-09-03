@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { usePos } from '../../context/PosContext';
-import { useAppwriteSync } from '../../hooks/useAppwriteSync';
+import { useSupabaseSync } from '../../hooks/useSupabaseSync';
 
 import { 
   BarChart3, 
@@ -38,7 +38,7 @@ function AdminDashboard() {
 
   const { user, logout } = useAuth();
   const { state } = usePos();
-  useAppwriteSync(); // Sincronización con Appwrite
+  useSupabaseSync(); // Sincronización con Supabase
 
 
   // Sample data for charts

@@ -1,313 +1,174 @@
-import { databases, DATABASE_ID, MENU_ITEMS_COLLECTION_ID, CATEGORIES_COLLECTION_ID, TABLES_COLLECTION_ID, EMPLOYEES_COLLECTION_ID, ATTENDANCE_COLLECTION_ID, POSITIONS_COLLECTION_ID, USERS_COLLECTION_ID, ORDERS_COLLECTION_ID, ID, Query } from './appwrite';
+import { supabaseService } from './supabaseService';
 
-// Agregar el ID de la colección de caja
-export const CASH_REGISTER_COLLECTION_ID = 'cash-register-collection';
-
-export interface MenuItem {
-  $id?: string;
-  name: string;
-  price: number;
-  category: string;
-  description: string;
-  preparationTime: number;
-  isSpicy: boolean;
-  isVegetarian: boolean;
-  available: boolean;
-}
-
-export interface Category {
-  $id?: string;
-  name: string;
-  order?: number;
-}
-
-
-
+// Re-exportar todo desde supabaseService para mantener compatibilidad
 export const menuService = {
   // Menu Items
-  async getMenuItems(): Promise<MenuItem[]> {
-    const response = await databases.listDocuments(
-      DATABASE_ID, 
-      MENU_ITEMS_COLLECTION_ID,
-      [Query.limit(200)]
-    );
-    return response.documents as MenuItem[];
+  async getMenuItems() {
+    const items = await supabaseService.getMenuItems();
+    return items.map(item => ({ $id: item.id, ...item }));
   },
 
-  async createMenuItem(item: Omit<MenuItem, '$id'>): Promise<MenuItem> {
-    // Verificar si ya existe un producto con el mismo nombre
-    const existing = await databases.listDocuments(
-      DATABASE_ID,
-      MENU_ITEMS_COLLECTION_ID,
-      [Query.equal('name', item.name)]
-    );
-    
-    if (existing.documents.length > 0) {
-      throw new Error(`Producto '${item.name}' ya existe`);
-    }
-    
-    const response = await databases.createDocument(
-      DATABASE_ID,
-      MENU_ITEMS_COLLECTION_ID,
-      ID.unique(),
-      item
-    );
-    return response as MenuItem;
+  async createMenuItem(item: any) {
+    const created = await supabaseService.createMenuItem(item);
+    return { $id: created.id, ...created };
   },
 
-  async updateMenuItem(id: string, item: Partial<MenuItem>): Promise<MenuItem> {
-    const response = await databases.updateDocument(
-      DATABASE_ID,
-      MENU_ITEMS_COLLECTION_ID,
-      id,
-      item
-    );
-    return response as MenuItem;
+  async updateMenuItem(id: string, item: any) {
+    const updated = await supabaseService.updateMenuItem(id, item);
+    return { $id: updated.id, ...updated };
   },
 
-  async deleteMenuItem(id: string): Promise<void> {
-    await databases.deleteDocument(DATABASE_ID, MENU_ITEMS_COLLECTION_ID, id);
+  async deleteMenuItem(id: string) {
+    return await supabaseService.deleteMenuItem(id);
   },
 
   // Categories
-  async getCategories(): Promise<Category[]> {
-    const response = await databases.listDocuments(DATABASE_ID, CATEGORIES_COLLECTION_ID);
-    return response.documents as Category[];
+  async getCategories() {
+    const categories = await supabaseService.getCategories();
+    return categories.map(cat => ({ $id: cat.id, name: cat.name }));
   },
 
-  async createCategory(category: Omit<Category, '$id'>): Promise<Category> {
-    const response = await databases.createDocument(
-      DATABASE_ID,
-      CATEGORIES_COLLECTION_ID,
-      ID.unique(),
-      category
-    );
-    return response as Category;
+  async createCategory(category: any) {
+    const created = await supabaseService.createCategory(category);
+    return { $id: created.id, ...created };
   },
 
   // Tables
-  async getTables(): Promise<any[]> {
-    const response = await databases.listDocuments(
-      DATABASE_ID,
-      TABLES_COLLECTION_ID,
-      [Query.limit(50)]
-    );
-    return response.documents;
+  async getTables() {
+    const tables = await supabaseService.getTables();
+    return tables.map(table => ({ $id: table.id, ...table }));
   },
 
-  async createTable(table: any): Promise<any> {
-    const response = await databases.createDocument(
-      DATABASE_ID,
-      TABLES_COLLECTION_ID,
-      ID.unique(),
-      table
-    );
-    return response;
+  async createTable(table: any) {
+    const created = await supabaseService.createTable(table);
+    return { $id: created.id, ...created };
   },
 
-  async updateTable(id: string, table: any): Promise<any> {
-    const response = await databases.updateDocument(
-      DATABASE_ID,
-      TABLES_COLLECTION_ID,
-      id,
-      table
-    );
-    return response;
+  async updateTable(id: string, table: any) {
+    const updated = await supabaseService.updateTable(id, table);
+    return { $id: updated.id, ...updated };
   },
 
-  async deleteTable(id: string): Promise<void> {
-    await databases.deleteDocument(DATABASE_ID, TABLES_COLLECTION_ID, id);
+  async deleteTable(id: string) {
+    return await supabaseService.deleteTable(id);
   },
 
   // Employees
-  async getEmployees(): Promise<any[]> {
-    const response = await databases.listDocuments(
-      DATABASE_ID,
-      EMPLOYEES_COLLECTION_ID,
-      [Query.limit(100)]
-    );
-    return response.documents;
+  async getEmployees() {
+    const employees = await supabaseService.getEmployees();
+    return employees.map(emp => ({ $id: emp.id, ...emp }));
   },
 
-  async createEmployee(employee: any): Promise<any> {
-    const response = await databases.createDocument(
-      DATABASE_ID,
-      EMPLOYEES_COLLECTION_ID,
-      ID.unique(),
-      employee
-    );
-    return response;
+  async createEmployee(employee: any) {
+    const created = await supabaseService.createEmployee(employee);
+    return { $id: created.id, ...created };
   },
 
-  async updateEmployee(id: string, employee: any): Promise<any> {
-    const response = await databases.updateDocument(
-      DATABASE_ID,
-      EMPLOYEES_COLLECTION_ID,
-      id,
-      employee
-    );
-    return response;
+  async updateEmployee(id: string, employee: any) {
+    const updated = await supabaseService.updateEmployee(id, employee);
+    return { $id: updated.id, ...updated };
   },
 
-  async deleteEmployee(id: string): Promise<void> {
-    await databases.deleteDocument(DATABASE_ID, EMPLOYEES_COLLECTION_ID, id);
-  },
-
-  // Attendance
-  async getAttendance(): Promise<any[]> {
-    const response = await databases.listDocuments(
-      DATABASE_ID,
-      ATTENDANCE_COLLECTION_ID,
-      [Query.limit(200)]
-    );
-    return response.documents;
-  },
-
-  async createAttendance(attendance: any): Promise<any> {
-    const response = await databases.createDocument(
-      DATABASE_ID,
-      ATTENDANCE_COLLECTION_ID,
-      ID.unique(),
-      attendance
-    );
-    return response;
-  },
-
-  async updateAttendance(id: string, attendance: any): Promise<any> {
-    const response = await databases.updateDocument(
-      DATABASE_ID,
-      ATTENDANCE_COLLECTION_ID,
-      id,
-      attendance
-    );
-    return response;
+  async deleteEmployee(id: string) {
+    return await supabaseService.deleteEmployee(id);
   },
 
   // Positions
-  async getPositions(): Promise<any[]> {
-    const response = await databases.listDocuments(
-      DATABASE_ID,
-      POSITIONS_COLLECTION_ID,
-      [Query.limit(50)]
-    );
-    return response.documents;
+  async getPositions() {
+    const positions = await supabaseService.getPositions();
+    return positions.map(pos => ({ $id: pos.id, ...pos }));
   },
 
-  async createPosition(position: any): Promise<any> {
-    const response = await databases.createDocument(
-      DATABASE_ID,
-      POSITIONS_COLLECTION_ID,
-      ID.unique(),
-      position
-    );
-    return response;
+  async createPosition(position: any) {
+    const created = await supabaseService.createPosition(position);
+    return { $id: created.id, ...created };
   },
 
-  async updatePosition(id: string, position: any): Promise<any> {
-    const response = await databases.updateDocument(
-      DATABASE_ID,
-      POSITIONS_COLLECTION_ID,
-      id,
-      position
-    );
-    return response;
+  async updatePosition(id: string, position: any) {
+    const updated = await supabaseService.updatePosition(id, position);
+    return { $id: updated.id, ...updated };
   },
 
-  async deletePosition(id: string): Promise<void> {
-    await databases.deleteDocument(DATABASE_ID, POSITIONS_COLLECTION_ID, id);
+  async deletePosition(id: string) {
+    return await supabaseService.deletePosition(id);
   },
 
   // Users
-  async getUsers(): Promise<any[]> {
-    const response = await databases.listDocuments(
-      DATABASE_ID,
-      USERS_COLLECTION_ID,
-      [Query.limit(100)]
-    );
-    return response.documents;
+  async getUsers() {
+    const users = await supabaseService.getUsers();
+    return users.map(user => ({ $id: user.id, ...user }));
   },
 
-  async createUser(user: any): Promise<any> {
-    const response = await databases.createDocument(
-      DATABASE_ID,
-      USERS_COLLECTION_ID,
-      ID.unique(),
-      user
-    );
-    return response;
+  async createUser(user: any) {
+    const created = await supabaseService.createUser(user);
+    return { $id: created.id, ...created };
   },
 
-  async updateUser(id: string, user: any): Promise<any> {
-    const response = await databases.updateDocument(
-      DATABASE_ID,
-      USERS_COLLECTION_ID,
-      id,
-      user
-    );
-    return response;
+  async updateUser(id: string, user: any) {
+    const updated = await supabaseService.updateUser(id, user);
+    return { $id: updated.id, ...updated };
   },
 
-  async deleteUser(id: string): Promise<void> {
-    await databases.deleteDocument(DATABASE_ID, USERS_COLLECTION_ID, id);
+  async deleteUser(id: string) {
+    return await supabaseService.deleteUser(id);
+  },
+
+  // Attendance
+  async getAttendance() {
+    const attendance = await supabaseService.getAttendance();
+    return attendance.map(att => ({ $id: att.id, ...att }));
+  },
+
+  async createAttendance(attendance: any) {
+    const created = await supabaseService.createAttendance(attendance);
+    return { $id: created.id, ...created };
+  },
+
+  async updateAttendance(id: string, attendance: any) {
+    const updated = await supabaseService.updateAttendance(id, attendance);
+    return { $id: updated.id, ...updated };
   },
 
   // Orders
-  async getOrders(): Promise<any[]> {
-    const response = await databases.listDocuments(
-      DATABASE_ID,
-      ORDERS_COLLECTION_ID,
-      [Query.limit(100)]
-    );
-    return response.documents;
+  async getOrders() {
+    const orders = await supabaseService.getOrders();
+    return orders.map(order => ({ $id: order.id, ...order }));
   },
 
-  async createOrder(order: any): Promise<any> {
-    const response = await databases.createDocument(
-      DATABASE_ID,
-      ORDERS_COLLECTION_ID,
-      ID.unique(),
-      order
-    );
-    return response;
+  async createOrder(order: any) {
+    const created = await supabaseService.createOrder(order);
+    return { $id: created.id, ...created };
   },
 
-  async updateOrder(id: string, order: any): Promise<any> {
-    const response = await databases.updateDocument(
-      DATABASE_ID,
-      ORDERS_COLLECTION_ID,
-      id,
-      order
-    );
-    return response;
+  async updateOrder(id: string, order: any) {
+    const updated = await supabaseService.updateOrder(id, order);
+    return { $id: updated.id, ...updated };
   },
 
   // Cash Register
-  async getCashRegister(): Promise<any> {
-    const response = await databases.listDocuments(
-      DATABASE_ID,
-      CASH_REGISTER_COLLECTION_ID,
-      [Query.limit(1)]
-    );
-    return response.documents[0] || null;
+  async getCashRegister() {
+    const cashRegister = await supabaseService.getCashRegister();
+    return cashRegister ? { $id: cashRegister.id, ...cashRegister } : null;
   },
 
-  async createCashRegister(cashRegister: any): Promise<any> {
-    const response = await databases.createDocument(
-      DATABASE_ID,
-      CASH_REGISTER_COLLECTION_ID,
-      ID.unique(),
-      cashRegister
-    );
-    return response;
+  async createCashRegister(cashRegister: any) {
+    const created = await supabaseService.createCashRegister(cashRegister);
+    return { $id: created.id, ...created };
   },
 
-  async updateCashRegister(id: string, cashRegister: any): Promise<any> {
-    const response = await databases.updateDocument(
-      DATABASE_ID,
-      CASH_REGISTER_COLLECTION_ID,
-      id,
-      cashRegister
-    );
-    return response;
+  async updateCashRegister(id: string, cashRegister: any) {
+    const updated = await supabaseService.updateCashRegister(id, cashRegister);
+    return { $id: updated.id, ...updated };
+  },
+
+  // Settings
+  async getSettings() {
+    const settings = await supabaseService.getSettings();
+    return settings ? { $id: settings.id, ...settings } : null;
+  },
+
+  async updateSettings(settings: any) {
+    const updated = await supabaseService.updateSettings(settings);
+    return { $id: updated.id, ...updated };
   }
 };
