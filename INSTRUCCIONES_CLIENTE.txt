@@ -1,0 +1,40 @@
+========================================
+   SISTEMA POS - CHIFA CHEFCITO
+   INSTRUCCIONES DE USO
+========================================
+
+INSTALACION INICIAL (SOLO UNA VEZ):
+1. Hacer doble clic en "instalar-dependencias.bat"
+2. Seguir las instrucciones si pide instalar Node.js
+3. Hacer doble clic en "crear-acceso-directo.bat"
+
+PARA USAR EL SISTEMA:
+1. Hacer doble clic en "Sistema POS Chifa" (escritorio)
+2. Se abrirá automáticamente el navegador
+3. ¡Listo! El sistema está funcionando
+
+PARA USAR DESDE TABLETS/MÓVILES:
+1. Conectar el dispositivo a la misma WiFi
+2. Abrir navegador y ir a: http://192.168.1.104:5173
+   (Cambiar 192.168.1.104 por la IP de esta PC)
+
+USUARIOS DEL SISTEMA:
+- Admin: admin / admin123
+- Cajero: cajero / cajero123  
+- Mozo: mozo / mozo123
+- Cocina: cocina / cocina123
+
+IMPORTANTE:
+- NO cerrar la ventana negra que aparece
+- Mantener la PC encendida mientras se usa el sistema
+- La impresora debe estar conectada y encendida
+
+PARA CERRAR EL SISTEMA:
+- Cerrar el navegador
+- Presionar Ctrl+C en la ventana negra
+- O simplemente cerrar la ventana negra
+
+SOPORTE:
+Si hay problemas, contactar al desarrollador.
+
+========================================
