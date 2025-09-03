@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { menuService } from '../../services/menuService';
+import { supabaseService } from '../../services/supabaseService';
 import { UserPlus, Users, Phone, Edit, Trash2, X, Save, Clock, CheckCircle, XCircle, Calendar, Settings, Plus } from 'lucide-react';
 
 interface Employee {
@@ -12,10 +12,10 @@ interface Employee {
 }
 
 interface Attendance {
-  employeeId: string;
+  employee_id: string;
   date: string;
-  entryTime?: string;
-  exitTime?: string;
+  entry_time?: string;
+  exit_time?: string;
 }
 
 interface Position {
@@ -56,14 +56,14 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
     const loadData = async () => {
       try {
         const [employeesData, attendanceData, positionsData] = await Promise.all([
-          menuService.getEmployees(),
-          menuService.getAttendance(),
-          menuService.getPositions()
+          supabaseService.getEmployees(),
+          supabaseService.getAttendance(),
+          supabaseService.getPositions()
         ]);
         
-        setEmployees(employeesData.map(emp => ({ id: emp.$id!, ...emp })));
-        setAttendance(attendanceData.map(att => ({ id: att.$id!, ...att })));
-        setPositions(positionsData.map(pos => ({ id: pos.$id!, ...pos })));
+        setEmployees(employeesData.map(emp => ({ id: emp.id!, ...emp })));
+        setAttendance(attendanceData.map(att => ({ id: att.id!, ...att })));
+        setPositions(positionsData.map(pos => ({ id: pos.id!, ...pos })));
       } catch (error) {
         console.error('Error loading data:', error);
       }
@@ -76,8 +76,8 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
     if (!newEmployee.name || !newEmployee.phone || !newEmployee.position || !newEmployee.dni) return;
     
     try {
-      const createdEmployee = await menuService.createEmployee(newEmployee);
-      const employee: Employee = { id: createdEmployee.$id!, ...createdEmployee };
+      const createdEmployee = await supabaseService.createEmployee(newEmployee);
+      const employee: Employee = { id: createdEmployee.id!, ...createdEmployee };
       
       const newEmployees = [...employees, employee];
       setEmployees(newEmployees);
@@ -114,7 +114,7 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
         status: newEmployee.status
       };
       
-      await menuService.updateEmployee(editingEmployee.id, updateData);
+      await supabaseService.updateEmployee(editingEmployee.id, updateData);
       const updatedEmployees = employees.map(emp => 
         emp.id === editingEmployee.id ? { ...emp, ...updateData } : emp
       );
@@ -140,7 +140,7 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
     if (!employeeToDelete) return;
     
     try {
-      await menuService.deleteEmployee(employeeToDelete.id);
+      await supabaseService.deleteEmployee(employeeToDelete.id);
       const filteredEmployees = employees.filter(emp => emp.id !== employeeToDelete.id);
       setEmployees(filteredEmployees);
       onEmployeesChange?.(filteredEmployees);
@@ -157,22 +157,22 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
     const time = new Date().toTimeString().slice(0, 5); // HH:MM format
     
     try {
-      const existing = attendance.find(a => a.employeeId === employeeId && a.date === today);
+      const existing = attendance.find(a => a.employee_id === employeeId && a.date === today);
       
       if (existing && existing.id) {
         const updateData = {
-          employeeId: existing.employeeId,
+          employee_id: existing.employee_id,
           date: existing.date,
-          entryTime: time,
-          exitTime: existing.exitTime
+          entry_time: time,
+          exit_time: existing.exit_time
         };
-        await menuService.updateAttendance(existing.id, updateData);
+        await supabaseService.updateAttendance(existing.id, updateData);
       } else {
-        await menuService.createAttendance({ employeeId, date: today, entryTime: time });
+        await supabaseService.createAttendance({ employee_id: employeeId, date: today, entry_time: time });
       }
       
-      const attendanceData = await menuService.getAttendance();
-      setAttendance(attendanceData.map(att => ({ id: att.$id!, ...att })));
+      const attendanceData = await supabaseService.getAttendance();
+      setAttendance(attendanceData.map(att => ({ id: att.id!, ...att })));
       onAttendanceChange?.(attendanceData);
     } catch (error) {
       console.error('Error marking entry:', error);
@@ -185,18 +185,18 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
     const time = new Date().toTimeString().slice(0, 5); // HH:MM format
     
     try {
-      const existing = attendance.find(a => a.employeeId === employeeId && a.date === today);
+      const existing = attendance.find(a => a.employee_id === employeeId && a.date === today);
       
       if (existing && existing.id) {
         const updateData = {
-          employeeId: existing.employeeId,
+          employee_id: existing.employee_id,
           date: existing.date,
-          entryTime: existing.entryTime,
-          exitTime: time
+          entry_time: existing.entry_time,
+          exit_time: time
         };
-        await menuService.updateAttendance(existing.id, updateData);
-        const attendanceData = await menuService.getAttendance();
-        setAttendance(attendanceData.map(att => ({ id: att.$id!, ...att })));
+        await supabaseService.updateAttendance(existing.id, updateData);
+        const attendanceData = await supabaseService.getAttendance();
+        setAttendance(attendanceData.map(att => ({ id: att.id!, ...att })));
         onAttendanceChange?.(attendanceData);
       }
     } catch (error) {
@@ -207,15 +207,15 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
 
   const getTodayAttendance = (employeeId: string) => {
     const today = new Date().toISOString().split('T')[0];
-    return attendance.find(a => a.employeeId === employeeId && a.date === today);
+    return attendance.find(a => a.employee_id === employeeId && a.date === today);
   };
 
   const handleAddPosition = async () => {
     if (!newPosition.name || newPosition.daylySalary <= 0) return;
     
     try {
-      const createdPosition = await menuService.createPosition(newPosition);
-      const position: Position = { id: createdPosition.$id!, ...createdPosition };
+      const createdPosition = await supabaseService.createPosition(newPosition);
+      const position: Position = { id: createdPosition.id!, ...createdPosition };
       setPositions([...positions, position]);
       setNewPosition({ name: '', daylySalary: 0 });
     } catch (error) {
@@ -228,7 +228,7 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
     if (!editingPosition || !newPosition.name || newPosition.daylySalary <= 0) return;
     
     try {
-      await menuService.updatePosition(editingPosition.id, newPosition);
+      await supabaseService.updatePosition(editingPosition.id, newPosition);
       setPositions(positions.map(pos => 
         pos.id === editingPosition.id ? { ...pos, ...newPosition } : pos
       ));
@@ -242,7 +242,7 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
 
   const handleDeletePosition = async (positionId: string) => {
     try {
-      await menuService.deletePosition(positionId);
+      await supabaseService.deletePosition(positionId);
       setPositions(positions.filter(pos => pos.id !== positionId));
     } catch (error) {
       console.error('Error deleting position:', error);
@@ -373,7 +373,7 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
                       onClick={async () => {
                         const newStatus = employee.status === 'activo' ? 'vacaciones' : 'activo';
                         try {
-                          await menuService.updateEmployee(employee.id, { status: newStatus });
+                          await supabaseService.updateEmployee(employee.id, { status: newStatus });
                           const updatedEmployees = employees.map(emp => 
                             emp.id === employee.id ? { ...emp, status: newStatus } : emp
                           );
@@ -431,22 +431,22 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
                       <span>{employee.dni}</span>
                     </div>
                     {(() => {
-                      const todayAttendance = getTodayAttendance(employee.id);
-                      return todayAttendance ? (
+                      const todayAtt = getTodayAttendance(employee.id);
+                      return todayAtt ? (
                         <div className="space-y-1">
-                          {todayAttendance.entryTime && (
+                          {todayAtt.entry_time && (
                             <div className="flex items-center space-x-2 px-2 py-1 rounded-lg bg-green-100 text-green-800">
                               <Clock className="w-3 h-3" />
-                              <span className="text-xs font-medium">Entrada: {todayAttendance.entryTime}</span>
+                              <span className="text-xs font-medium">Entrada: {todayAtt.entry_time}</span>
                             </div>
                           )}
-                          {todayAttendance.exitTime && (
+                          {todayAtt.exit_time && (
                             <div className="flex items-center space-x-2 px-2 py-1 rounded-lg bg-blue-100 text-blue-800">
                               <Clock className="w-3 h-3" />
-                              <span className="text-xs font-medium">Salida: {todayAttendance.exitTime}</span>
+                              <span className="text-xs font-medium">Salida: {todayAtt.exit_time}</span>
                             </div>
                           )}
-                          {!todayAttendance.entryTime && !todayAttendance.exitTime && (
+                          {!todayAtt.entry_time && !todayAtt.exit_time && (
                             <div className="flex items-center space-x-2 px-2 py-1 rounded-lg bg-gray-100 text-gray-600">
                               <Clock className="w-3 h-3" />
                               <span className="text-xs font-medium">Sin marcar</span>
@@ -650,14 +650,14 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
                         </div>
                         {todayAttendance && (
                           <div className="flex space-x-2">
-                            {todayAttendance.entryTime && (
+                            {todayAttendance.entry_time && (
                               <div className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Entrada: {todayAttendance.entryTime}
+                                Entrada: {todayAttendance.entry_time}
                               </div>
                             )}
-                            {todayAttendance.exitTime && (
+                            {todayAttendance.exit_time && (
                               <div className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                Salida: {todayAttendance.exitTime}
+                                Salida: {todayAttendance.exit_time}
                               </div>
                             )}
                           </div>
@@ -668,9 +668,9 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
                         <button
                           type="button"
                           onClick={() => markEntry(employee.id)}
-                          disabled={!!todayAttendance?.entryTime}
+                          disabled={!!todayAttendance?.entry_time}
                           className={`px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 ${
-                            todayAttendance?.entryTime
+                            todayAttendance?.entry_time
                               ? 'bg-green-600 text-white'
                               : 'bg-green-100 text-green-800 hover:bg-green-200'
                           } disabled:opacity-50 disabled:cursor-not-allowed`}
@@ -682,9 +682,9 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
                         <button
                           type="button"
                           onClick={() => markExit(employee.id)}
-                          disabled={!todayAttendance?.entryTime || !!todayAttendance?.exitTime}
+                          disabled={!todayAttendance?.entry_time || !!todayAttendance?.exit_time}
                           className={`px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 ${
-                            todayAttendance?.exitTime
+                            todayAttendance?.exit_time
                               ? 'bg-blue-600 text-white'
                               : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
                           } disabled:opacity-50 disabled:cursor-not-allowed`}
@@ -754,13 +754,13 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
                     {attendance
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                       .map((record, index) => {
-                        const employee = employees.find(emp => emp.id === record.employeeId);
+                        const employee = employees.find(emp => emp.id === record.employee_id);
                         if (!employee) return null;
                         
                         const calculateHours = () => {
-                          if (!record.entryTime || !record.exitTime) return '-';
-                          const [entryHour, entryMin] = record.entryTime.split(':').map(Number);
-                          const [exitHour, exitMin] = record.exitTime.split(':').map(Number);
+                          if (!record.entry_time || !record.exit_time) return '-';
+                          const [entryHour, entryMin] = record.entry_time.split(':').map(Number);
+                          const [exitHour, exitMin] = record.exit_time.split(':').map(Number);
                           const entryMinutes = entryHour * 60 + entryMin;
                           const exitMinutes = exitHour * 60 + exitMin;
                           const diffMinutes = exitMinutes - entryMinutes;
@@ -770,7 +770,7 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
                         };
                         
                         return (
-                          <tr key={`${record.employeeId}-${record.date}-${index}`} className="hover:bg-gray-50">
+                          <tr key={`${record.employee_id}-${record.date}-${index}`} className="hover:bg-gray-50">
                             <td className="p-4 border-b">
                               <div>
                                 <div className="font-medium text-gray-800">{employee.name}</div>
@@ -786,18 +786,18 @@ function StaffManagement({ onEmployeesChange, onAttendanceChange }: StaffManagem
                               {new Date(record.date).toLocaleDateString('es-PE')}
                             </td>
                             <td className="p-4 border-b">
-                              {record.entryTime ? (
+                              {record.entry_time ? (
                                 <span className="px-2 py-1 bg-green-100 text-green-800 rounded-lg text-sm font-medium">
-                                  {record.entryTime}
+                                  {record.entry_time}
                                 </span>
                               ) : (
                                 <span className="text-gray-400 text-sm">-</span>
                               )}
                             </td>
                             <td className="p-4 border-b">
-                              {record.exitTime ? (
+                              {record.exit_time ? (
                                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">
-                                  {record.exitTime}
+                                  {record.exit_time}
                                 </span>
                               ) : (
                                 <span className="text-gray-400 text-sm">-</span>

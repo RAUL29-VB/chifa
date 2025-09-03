@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { usePos } from '../../context/PosContext';
-import { menuService } from '../../services/menuService';
+import { supabaseService } from '../../services/supabaseService';
 import { 
   ChefHat, 
   Clock, 
@@ -22,14 +22,14 @@ function CocinaInterface() {
   useEffect(() => {
     const loadOrders = async () => {
       try {
-        const orders = await menuService.getOrders();
+        const orders = await supabaseService.getOrders();
         const formattedOrders = orders
           .filter(order => order.status === 'abierta')
           .map(order => ({
             ...order,
-            id: order.$id,
+            id: order.id,
             timestamp: new Date(order.timestamp),
-            items: JSON.parse(order.items)
+            items: typeof order.items === 'string' ? JSON.parse(order.items) : order.items
           }));
         dispatch({ type: 'SYNC_ORDERS', orders: formattedOrders });
       } catch (error) {
@@ -77,12 +77,12 @@ function CocinaInterface() {
 
       console.log('Items actualizados:', updatedItems);
       
-      // Actualizar en Appwrite
-      await menuService.updateOrder(orderId, {
+      // Actualizar en Supabase
+      await supabaseService.updateOrder(orderId, {
         items: JSON.stringify(updatedItems)
       });
       
-      // Actualizar estado local después de confirmar Appwrite
+      // Actualizar estado local después de confirmar Supabase
       dispatch({ 
         type: 'UPDATE_ORDER_ITEM_STATUS', 
         orderId, 

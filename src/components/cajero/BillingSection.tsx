@@ -41,18 +41,18 @@ function BillingSection({ selectedTable, onPaymentComplete }: BillingSectionProp
 
     if (orderData) {
       try {
-        // Actualizar mesa en Appwrite a libre
-        const { menuService } = await import('../../services/menuService');
-        await menuService.updateTable(selectedTable, {
+        // Actualizar mesa en Supabase a libre
+        const { supabaseService } = await import('../../services/supabaseService');
+        await supabaseService.updateTable(selectedTable, {
           status: 'libre'
         });
         
-        // Actualizar orden en Appwrite
-        await menuService.updateOrder(orderData.id, {
+        // Actualizar orden en Supabase
+        await supabaseService.updateOrder(orderData.id, {
           status: 'cerrada'
         });
         
-        // Registrar venta en cash register de Appwrite
+        // Registrar venta en cash register de Supabase
         const { cashRegisterService } = await import('../../services/cashRegisterService');
         await cashRegisterService.addSale(orderData.total);
         
@@ -73,14 +73,14 @@ function BillingSection({ selectedTable, onPaymentComplete }: BillingSectionProp
         dispatch({ type: 'CLOSE_ORDER', orderId: orderData.id, paymentMethod });
         dispatch({ type: 'UPDATE_CASH_REGISTER_SALES', amount: orderData.total });
         
-        // Forzar recarga de órdenes desde Appwrite
+        // Forzar recarga de órdenes desde Supabase
         setTimeout(async () => {
-          const orders = await menuService.getOrders();
+          const orders = await supabaseService.getOrders();
           const formattedOrders = orders.map(order => ({
             ...order,
-            id: order.$id,
+            id: order.id,
             timestamp: new Date(order.timestamp),
-            items: JSON.parse(order.items)
+            items: typeof order.items === 'string' ? JSON.parse(order.items) : order.items
           }));
           dispatch({ type: 'SYNC_ORDERS', orders: formattedOrders });
         }, 1000);
@@ -112,13 +112,13 @@ function BillingSection({ selectedTable, onPaymentComplete }: BillingSectionProp
 
     if (order) {
       try {
-        // Actualizar orden en Appwrite a cerrada
-        const { menuService } = await import('../../services/menuService');
-        await menuService.updateOrder(order.id, {
+        // Actualizar orden en Supabase a cerrada
+        const { supabaseService } = await import('../../services/supabaseService');
+        await supabaseService.updateOrder(order.id, {
           status: 'cerrada'
         });
         
-        // Registrar venta en cash register de Appwrite
+        // Registrar venta en cash register de Supabase
         const { cashRegisterService } = await import('../../services/cashRegisterService');
         await cashRegisterService.addSale(order.total);
         
@@ -139,14 +139,14 @@ function BillingSection({ selectedTable, onPaymentComplete }: BillingSectionProp
         dispatch({ type: 'CLOSE_ORDER', orderId: order.id, paymentMethod });
         dispatch({ type: 'UPDATE_CASH_REGISTER_SALES', amount: order.total });
         
-        // Forzar recarga de órdenes desde Appwrite
+        // Forzar recarga de órdenes desde Supabase
         setTimeout(async () => {
-          const orders = await menuService.getOrders();
+          const orders = await supabaseService.getOrders();
           const formattedOrders = orders.map(order => ({
             ...order,
-            id: order.$id,
+            id: order.id,
             timestamp: new Date(order.timestamp),
-            items: JSON.parse(order.items)
+            items: typeof order.items === 'string' ? JSON.parse(order.items) : order.items
           }));
           dispatch({ type: 'SYNC_ORDERS', orders: formattedOrders });
         }, 1000);

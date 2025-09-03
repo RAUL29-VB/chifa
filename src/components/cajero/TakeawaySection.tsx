@@ -59,8 +59,9 @@ function TakeawaySection() {
       const total = getTakeawayTotal();
       
       // Guardar en Appwrite primero
-      const { menuService } = await import('../../services/menuService');
-      const appwriteOrder = await menuService.createOrder({
+      // Guardar en Supabase primero
+      const { supabaseService } = await import('../../services/supabaseService');
+      const supabaseOrder = await supabaseService.createOrder({
         tableNumber: 0,
         items: JSON.stringify(takeawayOrder.map(item => ({
           ...item,
@@ -77,7 +78,7 @@ function TakeawaySection() {
       
       // Enviar a cocina
       const kitchenTicket = {
-        orderNumber: `LLEVAR-${appwriteOrder.$id.slice(-6)}`,
+        orderNumber: `LLEVAR-${supabaseOrder.id.slice(-6)}`,
         items: takeawayOrder.map(item => ({
           name: item.name,
           quantity: item.quantity,
@@ -90,14 +91,14 @@ function TakeawaySection() {
 
       await kitchenPrintService.printKitchenTicket(kitchenTicket);
       
-      // Recargar órdenes desde Appwrite en lugar de agregar localmente
+      // Recargar órdenes desde Supabase en lugar de agregar localmente
       setTimeout(async () => {
-        const orders = await menuService.getOrders();
+        const orders = await supabaseService.getOrders();
         const formattedOrders = orders.map(order => ({
           ...order,
-          id: order.$id,
+          id: order.id,
           timestamp: new Date(order.timestamp),
-          items: JSON.parse(order.items)
+          items: typeof order.items === 'string' ? JSON.parse(order.items) : order.items
         }));
         dispatch({ type: 'SYNC_ORDERS', orders: formattedOrders });
       }, 1000);

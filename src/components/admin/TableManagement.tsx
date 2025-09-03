@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { usePos } from '../../context/PosContext';
-import { menuService } from '../../services/menuService';
+import { supabaseService } from '../../services/supabaseService';
 import { Plus, Trash2 } from 'lucide-react';
 
 function TableManagement() {
@@ -11,8 +11,8 @@ function TableManagement() {
   useEffect(() => {
     const loadTables = async () => {
       try {
-        const tables = await menuService.getTables();
-        dispatch({ type: 'SET_TABLES_DATA', tables });
+        const tables = await supabaseService.getTables();
+        dispatch({ type: 'SET_TABLES_DATA', tables: tables.map(t => ({ $id: t.id, ...t })) });
       } catch (error) {
         console.error('Error loading tables:', error);
       }
@@ -25,14 +25,14 @@ function TableManagement() {
     if (newTable.number <= 0 || state.tables.some(t => t.number === newTable.number)) return;
     
     try {
-      const createdTable = await menuService.createTable({
+      const createdTable = await supabaseService.createTable({
         number: newTable.number,
         capacity: newTable.capacity,
         status: 'libre'
       });
       
       const table = {
-        id: createdTable.$id!,
+        id: createdTable.id!,
         number: createdTable.number,
         capacity: createdTable.capacity,
         status: createdTable.status,
@@ -87,7 +87,7 @@ function TableManagement() {
               <button
                 onClick={async () => {
                   try {
-                    await menuService.deleteTable(table.id);
+                    await supabaseService.deleteTable(table.id);
                     dispatch({ type: 'DELETE_TABLE', tableId: table.id });
                   } catch (error) {
                     console.error('Error deleting table:', error);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, Plus, X, Edit, Trash2 } from 'lucide-react';
-import { menuService } from '../../services/menuService';
+import { supabaseService } from '../../services/supabaseService';
 
 interface User {
   id: string;
@@ -12,7 +12,7 @@ interface User {
 }
 
 interface Employee {
-  $id: string;
+  id: string;
   name: string;
   dni: string;
   position: string;
@@ -42,7 +42,7 @@ function UserManagement() {
 
   const loadEmployees = async () => {
     try {
-      const employeesData = await menuService.getEmployees();
+      const employeesData = await supabaseService.getEmployees();
       setEmployees(employeesData);
     } catch (error) {
       console.error('Error loading employees:', error);
@@ -53,8 +53,8 @@ function UserManagement() {
 
   const loadUsers = async () => {
     try {
-      const usersData = await menuService.getUsers();
-      setUsers(usersData.map(user => ({ id: user.$id!, ...user })));
+      const usersData = await supabaseService.getUsers();
+      setUsers(usersData.map(user => ({ id: user.id!, ...user })));
     } catch (error) {
       console.error('Error loading users:', error);
       // Si la colección no existe, usar array vacío
@@ -67,14 +67,14 @@ function UserManagement() {
     
     try {
       const userData = {
-        employeeId: selectedEmployee.$id,
+        employee_id: selectedEmployee.id,
         name: selectedEmployee.name,
         email: newUser.email,
         password: newUser.password,
         status: 'activo'
       };
       
-      await menuService.createUser(userData);
+      await supabaseService.createUser(userData);
       await loadUsers();
       
       resetForm();
@@ -85,7 +85,7 @@ function UserManagement() {
   };
 
   const handleEmployeeSelect = (employeeId: string) => {
-    const employee = employees.find(emp => emp.$id === employeeId);
+    const employee = employees.find(emp => emp.id === employeeId);
     setSelectedEmployee(employee || null);
     setNewUser({employeeId, email: '', password: ''});
   };
@@ -111,7 +111,7 @@ function UserManagement() {
   const confirmDelete = async () => {
     if (!deletingUser) return;
     try {
-      await menuService.deleteUser(deletingUser.id);
+      await supabaseService.deleteUser(deletingUser.id);
       await loadUsers();
       setShowDeleteModal(false);
       setDeletingUser(null);
@@ -124,7 +124,7 @@ function UserManagement() {
   const handleUpdateUser = async () => {
     if (!editingUser) return;
     try {
-      await menuService.updateUser(editingUser.id, editForm);
+      await supabaseService.updateUser(editingUser.id, editForm);
       await loadUsers();
       setShowEditModal(false);
       setEditingUser(null);
@@ -163,7 +163,7 @@ function UserManagement() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {users.map((user) => {
-              const employee = employees.find(emp => emp.$id === user.employeeId);
+              const employee = employees.find(emp => emp.id === user.employee_id);
               const role = employee?.position || 'Usuario';
               return (
               <div key={user.id} className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-200">
@@ -246,7 +246,7 @@ function UserManagement() {
                   >
                     <option value="">Selecciona un empleado...</option>
                     {employees.filter(emp => emp.status === 'activo').map(employee => (
-                      <option key={employee.$id} value={employee.$id}>
+                      <option key={employee.id} value={employee.id}>
                         {employee.name} - {employee.position}
                       </option>
                     ))}

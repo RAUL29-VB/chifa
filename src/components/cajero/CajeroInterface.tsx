@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { usePos } from '../../context/PosContext';
-import { useAppwriteSync } from '../../hooks/useAppwriteSync';
+import { useSupabaseSync } from '../../hooks/useSupabaseSync';
 import { cashRegisterService } from '../../services/cashRegisterService';
 import { settingsService } from '../../services/settingsService';
 import BillingSection from './BillingSection';
@@ -30,7 +30,7 @@ function CajeroInterface() {
   
   const { user, logout } = useAuth();
   const { state, dispatch } = usePos();
-  useAppwriteSync(); // Sincronización con Appwrite
+  useSupabaseSync(); // Sincronización con Supabase
 
   useEffect(() => {
     loadCashRegisterData();

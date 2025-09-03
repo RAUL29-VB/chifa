@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { usePos } from '../../context/PosContext';
 import { usePrinter } from '../../hooks/usePrinter';
-import { useAppwriteSync } from '../../hooks/useAppwriteSync';
+import { useSupabaseSync } from '../../hooks/useSupabaseSync';
 import { 
   Users, 
   Plus, 
@@ -38,7 +38,7 @@ function MozoInterface() {
   const { user, logout } = useAuth();
   const { state, dispatch } = usePos();
   const { printKitchenTicket, isPrinting } = usePrinter();
-  useAppwriteSync(); // Sincronización con Appwrite
+  useSupabaseSync(); // Sincronización con Supabase
 
   const selectedTableData = selectedTable ? state.tables.find(t => t.id === selectedTable) : null;
   const availableItems = state.menuItems.filter(item => 
@@ -89,9 +89,9 @@ function MozoInterface() {
         isProcessing.current = true;
 
         try {
-          // 1. Guardar en Appwrite primero
-          const { menuService } = await import('../../services/menuService');
-          const appwriteOrder = await menuService.createOrder({
+          // 1. Guardar en Supabase primero
+          const { supabaseService } = await import('../../services/supabaseService');
+          const supabaseOrder = await supabaseService.createOrder({
             tableNumber: selectedTableData.number,
             items: JSON.stringify(selectedTableData.currentOrder),
             total: selectedTableData.total,
@@ -102,13 +102,13 @@ function MozoInterface() {
             customerCount: customerCount
           });
 
-          // 2. Actualizar estado local con el ID de Appwrite
+          // 2. Actualizar estado local con el ID de Supabase
           const newOrder = {
-            id: appwriteOrder.$id,
+            id: supabaseOrder.id,
             tableNumber: selectedTableData.number,
             items: selectedTableData.currentOrder.map(item => ({ 
               ...item, 
-              orderId: appwriteOrder.$id,
+              orderId: supabaseOrder.id,
               startTime: new Date()
             })),
             total: selectedTableData.total,
@@ -121,8 +121,8 @@ function MozoInterface() {
 
           dispatch({ type: 'ADD_TAKEAWAY_ORDER', order: newOrder });
           
-          // Actualizar mesa en Appwrite
-          await menuService.updateTable(selectedTable, {
+          // Actualizar mesa en Supabase
+          await supabaseService.updateTable(selectedTable, {
             status: 'ocupada'
           });
           
@@ -145,7 +145,7 @@ function MozoInterface() {
 
           // 3. Imprimir ticket
           const success = await printKitchenTicket({
-            orderNumber: `MESA-${selectedTableData.number}-${appwriteOrder.$id.slice(-6)}`,
+            orderNumber: `MESA-${selectedTableData.number}-${supabaseOrder.id.slice(-6)}`,
             items: selectedTableData.currentOrder.map(item => ({
               name: item.name,
               quantity: item.quantity,
@@ -207,9 +207,9 @@ function MozoInterface() {
       message: `¿Confirmar que Mesa ${selectedTableData.number} ha sido servida?`,
       onConfirm: async () => {
         try {
-          // Actualizar mesa en Appwrite
-          const { menuService } = await import('../../services/menuService');
-          await menuService.updateTable(selectedTable, {
+          // Actualizar mesa en Supabase
+          const { supabaseService } = await import('../../services/supabaseService');
+          await supabaseService.updateTable(selectedTable, {
             status: 'servido'
           });
           
@@ -249,9 +249,9 @@ function MozoInterface() {
       message: `¿Solicitar cuenta para Mesa ${selectedTableData.number}?`,
       onConfirm: async () => {
         try {
-          // Actualizar mesa en Appwrite
-          const { menuService } = await import('../../services/menuService');
-          await menuService.updateTable(selectedTable, {
+          // Actualizar mesa en Supabase
+          const { supabaseService } = await import('../../services/supabaseService');
+          await supabaseService.updateTable(selectedTable, {
             status: 'cuenta'
           });
           

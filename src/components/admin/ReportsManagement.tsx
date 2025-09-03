@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { usePos } from '../../context/PosContext';
-import { menuService } from '../../services/menuService';
+import { supabaseService } from '../../services/supabaseService';
 import { 
   BarChart3, 
   ShoppingBag, 
@@ -27,10 +27,10 @@ function ReportsManagement() {
   const loadReportsData = async () => {
     try {
       const [employeesData, attendanceData, menuData, positionsData] = await Promise.all([
-        menuService.getEmployees(),
-        menuService.getAttendance(),
-        menuService.getMenuItems(),
-        menuService.getPositions()
+        supabaseService.getEmployees(),
+        supabaseService.getAttendance(),
+        supabaseService.getMenuItems(),
+        supabaseService.getPositions()
       ]);
       
       setEmployees(employeesData);
